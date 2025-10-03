@@ -1,8 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Watchful_IP - Find RSA KEYs in TP-Link firmware and write them to include dir
 # VERSION=0.0.3
 # VDATE=03-01-25
+
+set -x
+set -e
 
 CORRECT_SHA256="0a7857d40fb02ff1b8d3cbce769e6c402a82a8094b4af553c54e4ffbdc4b6e64"
 LOG_FILE="rsa_key_extractor.log"
@@ -47,17 +50,32 @@ if [ ! -d fw ]; then
   cd fw
   wget -nc 'http://download.tplinkcloud.com/firmware/ax6000v2-up-ver1-1-2-P1[20230731-rel41066]_1024_nosign_2023-07-31_11.26.17_1693471186048.bin.rollback'
   wget -nc 'http://download.tplinkcloud.com/firmware/Tapo_C210v1_en_1.3.1_Build_221218_Rel.73283n_u_1679534600836.bin'
+  wget -nc 'https://static.tp-link.com/resources/gpl/rtk-maple_gpl.tar.gz'
   cd ..
 fi
+
+log_info "Extracting ../fw/rtk-maple_gpl.tar.gz..."
+tar -zxvf fw/rtk-maple_gpl.tar.gz "$(tar -ztf fw/rtk-maple_gpl.tar.gz | grep libservice.so.0.0.0)"
+DES_KEY_SYM="$(($(find -type f -name "libservice.so.0.0.0" -exec nm '{}' \; | grep des_key | awk '{ print "0x"$1 }') - 0x10000))"
+DES_IV_SYM=$((DES_KEY_SYM + 8))
+DES_KEY=$(od -j "$DES_KEY_SYM" -N 8 -t x1 -A n $(find -type f -name "libservice.so.0.0.0") | tr -d '[:space:]')
+DES_IV=$(od -j "$DES_IV_SYM" -N 8 -t x1 -A n $(find -type f -name "libservice.so.0.0.0") | tr -d '[:space:]')
+dd if=$(find -type f -name "libservice.so.0.0.0") bs=1 skip=$DES_KEY_SYM count=8 of=DES_KEY
+dd if=$(find -type f -name "libservice.so.0.0.0") bs=1 skip=$DES_IV_SYM count=8 of=DES_IV
+xxd -i DES_KEY > ../include/DES_KEY.h
+xxd -i DES_IV > ../include/DES_IV.h
+log_info "DES_KEY: $DES_KEY"
+log_info "DES_IV: $DES_IV"
 
 log_info "Do you want to run binwalk in quiet mode? [yes/no]"
 read -r QUIET_MODE
 if [[ "$QUIET_MODE" == "yes" ]]; then
+
   log_info "Extracting ../fw/ax6000v2-up-ver1-1-2-P1[20230731-rel41066]_1024_nosign_2023-07-31_11.26.17_1693471186048.bin.rollback..."
   if [ "$EUID" -eq 0 ]; then
-    binwalk -e -C 1 --run-as=root fw/ax6000v2-up-ver1-1-2-P1[20230731-rel41066]_1024_nosign_2023-07-31_11.26.17_1693471186048.bin.rollback 2>/dev/null
+    binwalk -M -e -C 1 --run-as=root fw/ax6000v2-up-ver1-1-2-P1[20230731-rel41066]_1024_nosign_2023-07-31_11.26.17_1693471186048.bin.rollback 1>&2 2>/dev/null
   else
-    binwalk -e -C 1 fw/ax6000v2-up-ver1-1-2-P1[20230731-rel41066]_1024_nosign_2023-07-31_11.26.17_1693471186048.bin.rollback 2>/dev/null
+    binwalk -M -e -C 1 fw/ax6000v2-up-ver1-1-2-P1[20230731-rel41066]_1024_nosign_2023-07-31_11.26.17_1693471186048.bin.rollback 1>&2 2>/dev/null
   fi
   RSAKEY_1=$(find -type f -name nvrammanager | head -n 1 | xargs strings | grep BgIAAAwk)
   if [ -z "$RSAKEY_1" ]; then
@@ -68,9 +86,9 @@ if [[ "$QUIET_MODE" == "yes" ]]; then
 
   log_info "Extracting ../fw/Tapo_C210v1_en_1.3.1_Build_221218_Rel.73283n_u_1679534600836.bin..."
   if [ "$EUID" -eq 0 ]; then
-    binwalk -e -C 0 --run-as=root fw/Tapo_C210v1_en_1.3.1_Build_221218_Rel.73283n_u_1679534600836.bin 2>/dev/null
+    binwalk -M -e -C 0 --run-as=root fw/Tapo_C210v1_en_1.3.1_Build_221218_Rel.73283n_u_1679534600836.bin 1>&2 2>/dev/null
   else
-    binwalk -e -C 0 fw/Tapo_C210v1_en_1.3.1_Build_221218_Rel.73283n_u_1679534600836.bin 2>/dev/null
+    binwalk -M -e -C 0 fw/Tapo_C210v1_en_1.3.1_Build_221218_Rel.73283n_u_1679534600836.bin 1>&2 2>/dev/null
   fi
   RSAKEY_0=$(find -type f -name slpupgrade | head -n 1 | xargs strings | grep BgIAAAwk)
   if [ -z "$RSAKEY_0" ]; then
@@ -79,9 +97,9 @@ if [[ "$QUIET_MODE" == "yes" ]]; then
 else
   log_info "Extracting ../fw/ax6000v2-up-ver1-1-2-P1[20230731-rel41066]_1024_nosign_2023-07-31_11.26.17_1693471186048.bin.rollback..."
   if [ "$EUID" -eq 0 ]; then
-    binwalk -e -C 1 --run-as=root fw/ax6000v2-up-ver1-1-2-P1[20230731-rel41066]_1024_nosign_2023-07-31_11.26.17_1693471186048.bin.rollback
+    binwalk -M -e -C 1 --run-as=root fw/ax6000v2-up-ver1-1-2-P1[20230731-rel41066]_1024_nosign_2023-07-31_11.26.17_1693471186048.bin.rollback
   else
-    binwalk -e -C 1 fw/ax6000v2-up-ver1-1-2-P1[20230731-rel41066]_1024_nosign_2023-07-31_11.26.17_1693471186048.bin.rollback
+    binwalk -M -e -C 1 fw/ax6000v2-up-ver1-1-2-P1[20230731-rel41066]_1024_nosign_2023-07-31_11.26.17_1693471186048.bin.rollback
   fi
   RSAKEY_1=$(find -type f -name nvrammanager | head -n 1 | xargs strings | grep BgIAAAwk)
   if [ -z "$RSAKEY_1" ]; then
@@ -92,9 +110,9 @@ else
 
   log_info "Extracting ../fw/Tapo_C210v1_en_1.3.1_Build_221218_Rel.73283n_u_1679534600836.bin..."
   if [ "$EUID" -eq 0 ]; then
-    binwalk -e -C 0 --run-as=root fw/Tapo_C210v1_en_1.3.1_Build_221218_Rel.73283n_u_1679534600836.bin
+    binwalk -M -e -C 0 --run-as=root fw/Tapo_C210v1_en_1.3.1_Build_221218_Rel.73283n_u_1679534600836.bin
   else
-    binwalk -e -C 0 fw/Tapo_C210v1_en_1.3.1_Build_221218_Rel.73283n_u_1679534600836.bin
+    binwalk -M -e -C 0 fw/Tapo_C210v1_en_1.3.1_Build_221218_Rel.73283n_u_1679534600836.bin
   fi
   RSAKEY_0=$(find -type f -name slpupgrade | head -n 1 | xargs strings | grep BgIAAAwk)
   if [ -z "$RSAKEY_0" ]; then

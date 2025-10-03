@@ -1,1 +1,5 @@
 include/*
+bin/*
+rsa_key_extractor.log
+tmp.fwextract/*
+obj/*

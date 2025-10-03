@@ -61,6 +61,7 @@ install_package g++
 if [[ "$DISTRO" == "debian" || "$DISTRO" == "ubuntu" || "$DISTRO" == "kali" ]]; then
   install_package xxd
   install_package binwalk
+  install_package binutils-mips-linux-gnu
 
   log_message "Installing Python library ubi_reader..."
   pip3 install ubi-reader --break-system-packages && log_message "ubi_reader installed." || log_warning "Failed to install ubi_reader. Skipping."
@@ -73,6 +74,7 @@ if [[ "$DISTRO" == "debian" || "$DISTRO" == "ubuntu" || "$DISTRO" == "kali" ]]; 
   verify_component make
   verify_component cmake
   verify_component g++
+  verify_component mips-linux-gnu-nm
   
   echo -n "ubi_reader: "
   if python3 -c "import ubireader" > /dev/null 2>&1; then

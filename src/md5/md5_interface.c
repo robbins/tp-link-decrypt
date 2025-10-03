@@ -107,88 +107,88 @@ void hmac_md5(
 }
 
 /* md5 checksum and des encrypt */
-int md5_des(const unsigned char *in,int in_len, unsigned char *out, int out_len, const unsigned char *key, int enc)
-{
-	unsigned char md5_digest[MD5_DIGEST_LEN+1];
-	int len;
-	int ret;
-
-	if (enc)
-	{
-		if (out_len - 8 - MD5_DIGEST_LEN < in_len)
-		{
-			printf ("output buf too small.\r\n");
-			return -1;
-		}
-		
-		md5_make_digest(md5_digest, (unsigned char*)in, in_len);
-		memcpy(out, md5_digest, MD5_DIGEST_LEN);
-		len = des_min_do(in, in_len, out + MD5_DIGEST_LEN, out_len - MD5_DIGEST_LEN, key, DES_ENCRYPT);
-		len += MD5_DIGEST_LEN;
-	}
-	else
-	{
-		if (out_len - 8 + MD5_DIGEST_LEN < in_len)
-		{
-			printf ("output buf too small.\r\n");
-			return -1;
-		}
-		
-		len = des_min_do(in + MD5_DIGEST_LEN, in_len - MD5_DIGEST_LEN, out, out_len, key, DES_DECRYPT);
-		ret = md5_verify_digest((unsigned char*)in, out, len);
-		if (ret < 0)
-			return ret;
-	}
-
-	return len;
-}
+//int md5_des(const unsigned char *in,int in_len, unsigned char *out, int out_len, const unsigned char *key, int enc)
+//{
+//	unsigned char md5_digest[MD5_DIGEST_LEN+1];
+//	int len;
+//	int ret;
+//
+//	if (enc)
+//	{
+//		if (out_len - 8 - MD5_DIGEST_LEN < in_len)
+//		{
+//			printf ("output buf too small.\r\n");
+//			return -1;
+//		}
+//		
+//		md5_make_digest(md5_digest, (unsigned char*)in, in_len);
+//		memcpy(out, md5_digest, MD5_DIGEST_LEN);
+//		len = des_min_do(in, in_len, out + MD5_DIGEST_LEN, out_len - MD5_DIGEST_LEN, key, DES_ENCRYPT);
+//		len += MD5_DIGEST_LEN;
+//	}
+//	else
+//	{
+//		if (out_len - 8 + MD5_DIGEST_LEN < in_len)
+//		{
+//			printf ("output buf too small.\r\n");
+//			return -1;
+//		}
+//		
+//		len = des_min_do(in + MD5_DIGEST_LEN, in_len - MD5_DIGEST_LEN, out, out_len, key, DES_DECRYPT);
+//		ret = md5_verify_digest((unsigned char*)in, out, len);
+//		if (ret < 0)
+//			return ret;
+//	}
+//
+//	return len;
+//}
 
 unsigned char cDesKey[8] = {0x47, 0x8D, 0xA5, 0x0B, 0xF9, 0xE3, 0xD2, 0xCF};
 
 #define MAX_FILE_LENGTH	(16 * 1024)
 
-int file_md5_des(char* infilename, char* outfilename, int bEncrypt)
-{
-	unsigned char readBuf[MAX_FILE_LENGTH];
-	unsigned char outBuf[3*MAX_FILE_LENGTH];
-	
-	int infd = open(infilename, O_RDONLY);
-	if (infd < 0)
-	{
-		perror("open input file");
-		return -1;
-	}
-	
-	int rt = read(infd, readBuf, MAX_FILE_LENGTH - 1);
-	if (rt < 0)
-	{
-		perror("read");
-		return -1;
-	}
-	else if (rt == MAX_FILE_LENGTH - 1)
-	{
-		printf("file too large!\n ");
-		return -1;
-	}
-	
-	int len = md5_des (readBuf, rt, outBuf, 3*MAX_FILE_LENGTH, cDesKey, bEncrypt);
-	
-	int outfd = open(outfilename, O_RDWR | O_CREAT | O_TRUNC);
-	if (outfd < 0)
-	{
-		perror("open output file");
-		return -1;
-	}
-	
-	//printf("len:%d\n", len);
-	if (write(outfd, outBuf, len) < 0)
-	{
-		perror("write");
-	}
-	
-	close(infd);
-	close(outfd);
-	
-	return 0;
-}
+//int file_md5_des(char* infilename, char* outfilename, int bEncrypt)
+//{
+//	unsigned char readBuf[MAX_FILE_LENGTH];
+//	unsigned char outBuf[3*MAX_FILE_LENGTH];
+//	
+//	int infd = open(infilename, O_RDONLY);
+//	if (infd < 0)
+//	{
+//		perror("open input file");
+//		return -1;
+//	}
+//	
+//	int rt = read(infd, readBuf, MAX_FILE_LENGTH - 1);
+//	if (rt < 0)
+//	{
+//		perror("read");
+//		return -1;
+//	}
+//	else if (rt == MAX_FILE_LENGTH - 1)
+//	{
+//		printf("file too large!\n ");
+//		return -1;
+//	}
+//	
+//	int len = md5_des (readBuf, rt, outBuf, 3*MAX_FILE_LENGTH, cDesKey, bEncrypt);
+//	
+//	int outfd = open(outfilename, O_RDWR | O_CREAT | O_TRUNC, 0777);
+//	if (outfd < 0)
+//	{
+//		perror("open output file");
+//		return -1;
+//	}
+//	
+//	//printf("len:%d\n", len);
+//	if (write(outfd, outBuf, len) < 0)
+//	{
+//		perror("write");
+//	}
+//	
+//	close(infd);
+//	close(outfd);
+//	
+//	return 0;
+//}
 

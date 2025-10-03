@@ -12,12 +12,13 @@ OBJECTS := $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 
 # Compiler and flags
 CC = gcc
+LDFLAGS = -lcrypto
 CFLAGS = -Wno-implicit-function-declaration -I$(SRCDIR)
 
 # Main target
 $(BINDIR)/$(MAIN): $(OBJECTS)
 	@mkdir -p $(BINDIR)
-	$(CC) $(OBJECTS) -o $@
+	$(CC) $(OBJECTS) $(LDFLAGS) -o $@
 
 # Rule for object files
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
