@@ -13,7 +13,7 @@ The below README has been edited from watchfulip/tp-link-decrypt and the origina
 
 2.  Run ./extract_keys.sh  to extract RSA/DES keys from TP-Link Firmware we download from vendor
 
-3.  Run `make` or `nix build`
+3.  Run `make` or `nix build` (if you're using `nix build` you need to `git add include` first so the files are visible. TODO #5 to add the include files to the Nix store directly).
 
 Decrypt with bin/tp-link-decrypt <fw file>
 
