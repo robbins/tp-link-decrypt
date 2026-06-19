@@ -72,11 +72,7 @@ read -r QUIET_MODE
 if [[ "$QUIET_MODE" == "yes" ]]; then
 
   log_info "Extracting ../fw/ax6000v2-up-ver1-1-2-P1[20230731-rel41066]_1024_nosign_2023-07-31_11.26.17_1693471186048.bin.rollback..."
-  if [ "$EUID" -eq 0 ]; then
-    binwalk -M -e -C 1 --run-as=root fw/ax6000v2-up-ver1-1-2-P1[20230731-rel41066]_1024_nosign_2023-07-31_11.26.17_1693471186048.bin.rollback 1>&2 2>/dev/null
-  else
-    binwalk -M -e -C 1 fw/ax6000v2-up-ver1-1-2-P1[20230731-rel41066]_1024_nosign_2023-07-31_11.26.17_1693471186048.bin.rollback 1>&2 2>/dev/null
-  fi
+  binwalk -M -e -C 1 fw/ax6000v2-up-ver1-1-2-P1[20230731-rel41066]_1024_nosign_2023-07-31_11.26.17_1693471186048.bin.rollback 1>&2 2>/dev/null
   RSAKEY_1=$(find -type f -name nvrammanager | head -n 1 | xargs strings | grep BgIAAAwk)
   if [ -z "$RSAKEY_1" ]; then
     log_error "Failed to extract RSAKEY_1."
@@ -85,22 +81,14 @@ if [[ "$QUIET_MODE" == "yes" ]]; then
   log_info "RSAKEY_1: $RSAKEY_1"
 
   log_info "Extracting ../fw/Tapo_C210v1_en_1.3.1_Build_221218_Rel.73283n_u_1679534600836.bin..."
-  if [ "$EUID" -eq 0 ]; then
-    binwalk -M -e -C 0 --run-as=root fw/Tapo_C210v1_en_1.3.1_Build_221218_Rel.73283n_u_1679534600836.bin 1>&2 2>/dev/null
-  else
-    binwalk -M -e -C 0 fw/Tapo_C210v1_en_1.3.1_Build_221218_Rel.73283n_u_1679534600836.bin 1>&2 2>/dev/null
-  fi
+  binwalk -M -e -C 0 fw/Tapo_C210v1_en_1.3.1_Build_221218_Rel.73283n_u_1679534600836.bin 1>&2 2>/dev/null
   RSAKEY_0=$(find -type f -name slpupgrade | head -n 1 | xargs strings | grep BgIAAAwk)
   if [ -z "$RSAKEY_0" ]; then
     log_error "Failed to extract RSAKEY_0."
   fi
 else
   log_info "Extracting ../fw/ax6000v2-up-ver1-1-2-P1[20230731-rel41066]_1024_nosign_2023-07-31_11.26.17_1693471186048.bin.rollback..."
-  if [ "$EUID" -eq 0 ]; then
-    binwalk -M -e -C 1 --run-as=root fw/ax6000v2-up-ver1-1-2-P1[20230731-rel41066]_1024_nosign_2023-07-31_11.26.17_1693471186048.bin.rollback
-  else
-    binwalk -M -e -C 1 fw/ax6000v2-up-ver1-1-2-P1[20230731-rel41066]_1024_nosign_2023-07-31_11.26.17_1693471186048.bin.rollback
-  fi
+  binwalk -M -e -C 1 fw/ax6000v2-up-ver1-1-2-P1[20230731-rel41066]_1024_nosign_2023-07-31_11.26.17_1693471186048.bin.rollback
   RSAKEY_1=$(find -type f -name nvrammanager | head -n 1 | xargs strings | grep BgIAAAwk)
   if [ -z "$RSAKEY_1" ]; then
     log_error "Failed to extract RSAKEY_1."
@@ -109,11 +97,7 @@ else
   log_info "RSAKEY_1: $RSAKEY_1"
 
   log_info "Extracting ../fw/Tapo_C210v1_en_1.3.1_Build_221218_Rel.73283n_u_1679534600836.bin..."
-  if [ "$EUID" -eq 0 ]; then
-    binwalk -M -e -C 0 --run-as=root fw/Tapo_C210v1_en_1.3.1_Build_221218_Rel.73283n_u_1679534600836.bin
-  else
-    binwalk -M -e -C 0 fw/Tapo_C210v1_en_1.3.1_Build_221218_Rel.73283n_u_1679534600836.bin
-  fi
+  binwalk -M -e -C 0 fw/Tapo_C210v1_en_1.3.1_Build_221218_Rel.73283n_u_1679534600836.bin
   RSAKEY_0=$(find -type f -name slpupgrade | head -n 1 | xargs strings | grep BgIAAAwk)
   if [ -z "$RSAKEY_0" ]; then
     log_error "Failed to extract RSAKEY_0."
