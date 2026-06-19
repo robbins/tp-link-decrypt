@@ -145,6 +145,7 @@ int main(int argc, char *argv[])
     //printf("fw_buffer is size %u\n", fw_size);
     
     const char *RSA_KEY; 
+    size_t RSA_KEY_len = 0;
     int SIG_SIZE=0;
     int RSA_VER_pos=0;
     int fw_data_pos=0;
@@ -158,6 +159,7 @@ int main(int argc, char *argv[])
     switch (firmware_ver) {
         case 1:   //  fw-type: in header
         RSA_KEY= RSA_1; //from ax6000v2-up-ver1-1-2-P1[20230731-rel41066]_1024_nosign_2023-07-31_11.26.17_1693471186048.bin.rollback
+        RSA_KEY_len = RSA_1_len;
         sig_pos=0x130;	
         fw_data_pos=0x14;
         RSA_VER_pos=0x110;
@@ -167,6 +169,7 @@ int main(int argc, char *argv[])
         
         case 2:   // Tapo IPC
         RSA_KEY=RSA_0;	 //from Tapo_C210v1_en_1.3.1_Build_221218_Rel.73283n_u_1679534600836.bin
+        RSA_KEY_len = RSA_0_len;
         sig_pos=0x20; 
         RSA_VER_pos=0x00;
         fw_data_pos=0x00;
@@ -216,7 +219,7 @@ int main(int argc, char *argv[])
       #ifdef DEBUG    
           printf("Debug: Calling rsaVerifyPSSSignByBase64EncodePublicKeyBlob with:\n");
           printf("RSA_KEY: %s\n", RSA_KEY);
-          printf("RSA_KEY_len: %lu\n", strlen(RSA_KEY));
+          printf("RSA_KEY_len: %lu\n", RSA_KEY_len);
           printf("fw_buffer address: %p\n", (void*)fw_buffer);
           printf("fw_size: %u\n", fw_size);
           printf("signature address: %p\n", (void*)signature);
@@ -242,7 +245,7 @@ int main(int argc, char *argv[])
       
 	  int result = rsaVerifyPSSSignByBase64EncodePublicKeyBlob(
 	      (unsigned char *)RSA_KEY,
-	      strlen(RSA_KEY),
+	      RSA_KEY_len,
 	      fw_buffer+fw_data_pos,
 	      fw_size,
 	      signature,
