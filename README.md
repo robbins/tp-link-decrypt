@@ -9,13 +9,13 @@ The below README has been edited from watchfulip/tp-link-decrypt and the origina
 - @tangrs 22 Sep 2025 Finding that the relevant binaries are published in TPLink GPL code dumps and how to extract keys from them: https://blog.tangrs.id.au/2025/09/22/decrypting-tplink-smart-switch-firmware/
 
 # Instructions
-1.  (optional)  Run ./preinstall.sh or nix-shell to satisfy dependencies
+1.  (optional)  Run `./preinstall.sh` or `nix develop` to satisfy dependencies
 
 2.  Run ./extract_keys.sh  to extract RSA/DES keys from TP-Link Firmware we download from vendor
 
-3.  Run make
+3.  Run `make` or `nix build`
 
-Decrypt with   bin/tp-link-decrypt <fw file>
+Decrypt with bin/tp-link-decrypt <fw file>
 
 If you found this tool useful, feel free to let me or WatchfulIP watchfulip@protonmail.com know :)
 
