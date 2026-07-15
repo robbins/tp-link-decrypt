@@ -99,12 +99,12 @@ int detect_firmware_ver(const unsigned char *fw_buffer, size_t buffer_size)
     }
     
     if (memcmp(fw_buffer + FW_TYPE_OFFSET, FW_TYPE_STRING, FW_TYPE_LENGTH) == 0) {
-        printf("%s found\n",FW_TYPE_STRING);
+        fprintf(stderr, "%s found\n",FW_TYPE_STRING);
         return 1;  
     }
 
     if (memcmp(fw_buffer + TAPO_FW_HEADER_OFFSET, tapo_fw_header, sizeof(tapo_fw_header)) == 0) {
-      printf("Tapo firmware header found\n");
+      fprintf(stderr, "Tapo firmware header found\n");
       return 2;
     }
     
@@ -113,36 +113,54 @@ int detect_firmware_ver(const unsigned char *fw_buffer, size_t buffer_size)
 
 int main(int argc, char *argv[]) 
 {
-	printf("\nTP-link firmware decrypt\n\n%s %s v%s\n%s\n\n", AUTHOR, VDATE, VERSION,URL);
+	fprintf(stderr, "\nTP-link firmware decrypt\n\n%s %s v%s\n%s\n\n", AUTHOR, VDATE, VERSION,URL);
 	
     if (argc != 2) {
         fprintf(stderr, "Usage: %s <firmware_file>\n", argv[0]);
+        fprintf(stderr, "       %s -  (read from stdin, write decrypted to stdout)\n", argv[0]);
         return 1;
     }
     
     const char *firmware_file = argv[1];
-    FILE *fp = fopen(firmware_file, "rb");
-    if (!fp) {
-        perror("Error opening firmware file\n");
-        return 1;
-    }
-    
-    fseek(fp, 0, SEEK_END);
-    unsigned int fw_size = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-    
-    //printf("fw_size is %u\n", fw_size);
-    
-    // Read firmware into buffer
-    unsigned char *fw_buffer = calloc(1,fw_size);
-    if (!fw_buffer) {
-        perror("Error allocating memory");
+    int use_stdio = (strcmp(firmware_file, "-") == 0);
+
+    unsigned int fw_size;
+    unsigned char *fw_buffer;
+
+    if (use_stdio) {
+        // stdin is not seekable — read into a dynamically grown buffer
+        size_t capacity = 4 * 1024 * 1024;
+        fw_size = 0;
+        fw_buffer = malloc(capacity);
+        if (!fw_buffer) { perror("malloc"); return 1; }
+        size_t n;
+        while ((n = fread(fw_buffer + fw_size, 1, capacity - fw_size, stdin)) > 0) {
+            fw_size += n;
+            if (fw_size == capacity) {
+                capacity *= 2;
+                unsigned char *tmp = realloc(fw_buffer, capacity);
+                if (!tmp) { perror("realloc"); free(fw_buffer); return 1; }
+                fw_buffer = tmp;
+            }
+        }
+    } else {
+        FILE *fp = fopen(firmware_file, "rb");
+        if (!fp) {
+            perror("Error opening firmware file");
+            return 1;
+        }
+        fseek(fp, 0, SEEK_END);
+        fw_size = ftell(fp);
+        fseek(fp, 0, SEEK_SET);
+        fw_buffer = calloc(1, fw_size);
+        if (!fw_buffer) {
+            perror("Error allocating memory");
+            fclose(fp);
+            return 1;
+        }
+        fread(fw_buffer, 1, fw_size, fp);
         fclose(fp);
-        return 1;
     }
-    fread(fw_buffer, 1, fw_size, fp);
-    fclose(fp);
-    //printf("fw_buffer is size %u\n", fw_size);
     
     const char *RSA_KEY; 
     size_t RSA_KEY_len = 0;
@@ -180,7 +198,7 @@ int main(int argc, char *argv[])
         break;
         
         default:
-        printf("Unknown firmware_ver %d\n",firmware_ver);
+        fprintf(stderr, "Unknown firmware_ver %d\n",firmware_ver);
         exit(1);
         break;	     
     }    
@@ -195,16 +213,16 @@ int main(int argc, char *argv[])
 	  else if (RSA_VER == 0x100) 
 	  {
 	  	SIG_SIZE = 0x80;
-	  	printf("RSA-1024 not tested and firmware likely not encrypted\n");
+	  	fprintf(stderr, "RSA-1024 not tested and firmware likely not encrypted\n");
 	  	exit(1);
       }
 	  else	
 	  {
-	  	printf("Unable to determine RSA\n");
+	  	fprintf(stderr, "Unable to determine RSA\n");
 	  	exit(1);
       }	
       
-	  printf("RSA-%d\n\n", RSA_VER*4);    
+	  fprintf(stderr, "RSA-%d\n\n", RSA_VER*4);    
       
       // Extract signature
       unsigned char signature[SIG_SIZE];
@@ -264,7 +282,7 @@ int main(int argc, char *argv[])
           return -1;
       }
 	  else
-	      printf("\nFirmware verification successful\n");
+	      fprintf(stderr, "\nFirmware verification successful\n");
   } else {
     OSSL_PROVIDER *legacy = OSSL_PROVIDER_load(NULL, "legacy");
     if (!legacy) {
@@ -303,32 +321,36 @@ int main(int argc, char *argv[])
     }
     int outlen = outlen1 + outlen2;
     if (outlen != fw_size) {
-      printf("DES decryption invalid\n");
+      fprintf(stderr, "DES decryption invalid\n");
     }
     fw_buffer = outbuf;
   }
     
-	char *dec_fw_file = malloc(strlen(firmware_file) + 5);
-	if (dec_fw_file == NULL) {
-		return -1;
+    if (use_stdio) {
+        fwrite(fw_buffer, 1, fw_size, stdout);
+        fflush(stdout);
+        fprintf(stderr, "\nDecrypted firmware written to stdout\n\n");
+    } else {
+        char *dec_fw_file = malloc(strlen(firmware_file) + 5);
+        if (dec_fw_file == NULL) {
+            return -1;
+        }
+        strcpy(dec_fw_file, firmware_file);
+        strcat(dec_fw_file, ".dec");
+
+        // Write decrypted firmware to new file
+        FILE *out_fp = fopen(dec_fw_file, "wb");
+        if (!out_fp) {
+            perror("Error creating output file");
+            free(fw_buffer);
+            return 1;
+        }
+
+        fwrite(fw_buffer, 1, fw_size, out_fp);
+        fclose(out_fp);
+
+        fprintf(stderr, "\nDecrypted firmware written to %s\n\n", dec_fw_file);
+
+        free(dec_fw_file);
     }
-	strcpy(dec_fw_file, firmware_file);
-	strcat(dec_fw_file, ".dec");
-    
-    // Write decrypted firmware to new file
-    FILE *out_fp = fopen(dec_fw_file, "wb");
-    if (!out_fp) {
-        perror("Error creating output file\n");
-        free(fw_buffer);
-        return 1;
-    }
-    
-    fwrite(fw_buffer, 1, fw_size, out_fp);
-    fclose(out_fp);
-    
-    printf("\nDecrypted firmware written to %s\n\n",dec_fw_file);
-    
-    free(dec_fw_file);
-    free(fw_buffer);
-    return 0;
 }
