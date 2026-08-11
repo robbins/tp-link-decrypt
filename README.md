@@ -19,6 +19,23 @@ Decrypt with bin/tp-link-decrypt <fw file>
 
 If you found this tool useful, feel free to let me or WatchfulIP watchfulip@protonmail.com know :)
 
+# Firmware header RSA_VER values
+
+The 4-byte big-endian value at the `RSA_VER` offset selects the signing/encryption scheme:
+
+| RSA_VER | Scheme | Status |
+|---|---|---|
+| `0x100` | RSA-1024 signed, payload **not** encrypted | detected (extract the image directly) |
+| `0x200` | RSA-2048 signed + AES-encrypted | handled |
+| `0x201` | RSA-2048 **variant**, signed + AES-encrypted | not yet handled (see below) |
+
+`0x201` uses the same `0x100`-byte signature size as `0x200`. It has been observed on TP-Link
+**VIGI** cameras — e.g. the **VIGI InSight S345-4G** (Novatek NT9856x SoC), firmware
+`S345-4G_1.0_en_2.2.3_Build_260714_Rel.20306n_up_boot_signed.bin`. Decrypting a `0x201` image needs
+that model's RSA-2048 public key (not present in the public GPL dumps `extract_keys.sh` pulls from),
+so it is documented here for reference rather than supported. Simply adding `0x201` to the detection
+branch is **not** sufficient — without the matching key the PSS verify path underflows and aborts.
+
 NOTE:
 
 This program uses libsecurity GPL code downloaded from https://static.tp-link.com/upload/gpl-code/2022/202211/20221130/c310v2_GPL.tar.bz2
