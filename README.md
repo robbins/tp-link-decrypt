@@ -29,6 +29,9 @@ TP-Link firmware links used:
 - http://download.tplinkcloud.com/firmware/Tapo_C210v1_en_1.3.1_Build_221218_Rel.73283n_u_1679534600836.bin
 - https://static.tp-link.com/resources/gpl/rtk-maple_gpl.tar.gz
 
+# Contributing
+LLM authored/co-authored commits are fine, provided you've tested the code yourself, but please don't use an LLM to write the PR description. Thanks.
+
 -------------------------------------------------------------------------------
 
 Great care has been taken not to infringe TP-Link's rights.
